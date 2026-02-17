@@ -1,0 +1,44 @@
+{
+  "poojaaa.sri8@gmail.com": {
+    "id": "a4a779ae-e1f9-4c2a-9749-b78a9938ec8f",
+    "email": "poojaaa.sri8@gmail.com",
+    "name": "raj",
+    "passwordHash": "$2a$10$KHReaZLX6z/qtrX23uD/YOQos9ZDnzAQEIsD9hqvM19nptLNEiks2",
+    "channelDescription": "I do podcasts with all the famous personalities , through out the world on power , fame , health , wealth , relationship , mindset , success , growth and all .",
+    "interviewerStyle": "I ususally try to encounter people , mindset , how to grow in life , how to become successful , and like this everything .",
+    "profileComplete": true,
+    "createdAt": "2026-02-13T17:07:43.038Z"
+  },
+  "settingstest@test.com": {
+    "id": "8cdb9b0a-8bc8-4552-99ed-8fd0bd0a284d",
+    "email": "settingstest@test.com",
+    "name": "Settings Tester",
+    "passwordHash": "$2a$10$MkBpbuRtkFogtyS.t0CtiOdjsx7rpjLS7mlNiC5O3fIl9txjGgYbO",
+    "channelDescription": "",
+    "interviewerStyle": "",
+    "profileComplete": false,
+    "createdAt": "2026-02-16T01:10:42.726Z"
+  },
+  "apitest@t.com": {
+    "id": "46fadec3-c015-436b-84c3-84db41045fd4",
+    "email": "apitest@t.com",
+    "name": "API Tester",
+    "passwordHash": "$2a$10$HuCK1EwyxT7F6GSLjeFvFOZeLT1vNL2hBoNwPtpihkd.tLwHZ0q4W",
+    "channelDescription": "",
+    "interviewerStyle": "",
+    "profileComplete": false,
+    "createdAt": "2026-02-16T01:12:02.438Z"
+  },
+  "verify_1771213755871@test.com": {
+    "id": "37123751-b37f-48b2-8e8b-4c3ef1aadc47",
+    "email": "verify_1771213755871@test.com",
+    "name": "Verification User",
+    "passwordHash": "$2a$10$70PJpqat6aDj81gNbyTod.hYXzY4dUnyze6bqaPh8U159ysliVdXq",
+    "channelDescription": "",
+    "interviewerStyle": "",
+    "profileComplete": false,
+    "createdAt": "2026-02-16T03:49:16.146Z",
+    "youtubeApiKey": "AIzaSyDummyYoutubeKey12345",
+    "geminiApiKey": "AIzaSyDummyGeminiKey67890"
+  }
+}

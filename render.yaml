@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: interview-iq
+    env: node
+    buildCommand: npm install
+    startCommand: node server/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: MONGO_URI
+        sync: false
+    plan: free
+    autoDeploy: false

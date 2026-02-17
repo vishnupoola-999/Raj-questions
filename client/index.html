@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InterviewIQ — AI Interview Prep</title>
+  <meta name="description"
+    content="AI-powered interview preparation for professionals. Research guests, generate killer questions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand" onclick="if(currentUser) navigateTo('dashboard')" style="cursor:pointer;">
+      <i data-lucide="mic" class="brand-icon"></i>
+      <span class="brand-text">InterviewIQ</span>
+    </div>
+    <div class="nav-actions" id="navActions" style="display:none;">
+      <span class="nav-user" id="navUser"></span>
+      <button class="btn-ghost nav-icon-btn" id="btnSettings" title="Settings" onclick="navigateTo('settings')">
+        <i data-lucide="settings" class="icon-sm"></i>
+      </button>
+      <button class="btn-ghost nav-icon-btn" id="btnLogout" title="Logout" onclick="logout()">
+        <i data-lucide="log-out" class="icon-sm"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- ════════ PAGE 1: AUTH ════════ -->
+    <div class="page active" id="page-auth">
+      <div class="auth-container">
+        <!-- Hero Left -->
+        <div class="auth-hero">
+          <div class="hero-badge"><i data-lucide="sparkles" class="icon-sm"></i> AI-Powered</div>
+          <h1 class="hero-title">Prepare smarter.<br>Interview deeper.</h1>
+          <p class="hero-subtitle">InterviewIQ researches your guest across YouTube, Wikipedia, and the web — then
+            generates short, powerful questions that hit different.</p>
+          <div class="hero-features">
+            <div class="hero-feat"><i data-lucide="youtube" class="icon-sm"></i> <span>Analyzes every interview on
+                YouTube</span></div>
+            <div class="hero-feat"><i data-lucide="globe" class="icon-sm"></i> <span>Reads articles, blogs, social
+                media, Wikipedia</span></div>
+            <div class="hero-feat"><i data-lucide="zap" class="icon-sm"></i> <span>Generates questions tailored to your
+                style</span></div>
+          </div>
+        </div>
+
+        <!-- Auth Card -->
+        <div class="auth-card">
+
+          <!-- View: Register (Default) -->
+          <div class="auth-view active" id="view-register">
+            <div class="auth-header">
+              <h2>Create an account</h2>
+              <p>Enter your details to get started</p>
+            </div>
+            <form onsubmit="handleRegister(event)">
+              <div class="form-group">
+                <label for="regName">Full Name</label>
+                <input type="text" id="regName" placeholder="Raj Shamani" required>
+              </div>
+              <div class="form-group">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" placeholder="name@example.com" required>
+              </div>
+              <div class="form-group">
+                <label for="regPassword">Password</label>
+                <input type="password" id="regPassword" placeholder="••••••" required minlength="6">
+              </div>
+              <button type="submit" class="btn-primary" id="registerBtn">
+                <span class="btn-text">Create account</span>
+                <span class="btn-loading"><span class="spinner"></span> Creating...</span>
+              </button>
+            </form>
+            <div class="auth-footer">
+              Already have an account? <a href="#" onclick="showAuthView('login')">Sign in</a>
+            </div>
+          </div>
+
+          <!-- View: Login -->
+          <div class="auth-view" id="view-login">
+            <div class="auth-header">
+              <h2>Welcome back</h2>
+              <p>Sign in to your InterviewIQ account</p>
+            </div>
+            <form onsubmit="handleLogin(event)">
+              <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="name@example.com" required>
+              </div>
+              <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••" required minlength="6">
+              </div>
+              <button type="submit" class="btn-primary" id="loginBtn">
+                <span class="btn-text">Sign in</span>
+                <span class="btn-loading"><span class="spinner"></span> Signing in...</span>
+              </button>
+            </form>
+            <div class="auth-footer">
+              Don't have an account? <a href="#" onclick="showAuthView('register')">Create account</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PAGE 2: SETUP ════════ -->
+    <div class="page" id="page-setup">
+      <div class="center-container">
+        <div class="content-card" style="max-width:520px;">
+          <div class="card-header">
+            <div class="icon-circle"><i data-lucide="user-cog"></i></div>
+            <h2>Profile Setup</h2>
+            <p>Tell us about your show to tailor the AI.</p>
+          </div>
+          <form onsubmit="handleProfileSetup(event)">
+            <div class="form-group">
+              <label for="setupName">Name / Channel</label>
+              <input type="text" id="setupName" placeholder="e.g. Raj Shamani" required>
+            </div>
+            <div class="form-group">
+              <label for="setupChannel">About the Show</label>
+              <textarea id="setupChannel" rows="3" placeholder="Context about your channel..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setupStyle">Interview Style</label>
+              <textarea id="setupStyle" rows="3" placeholder="e.g. Confrontational, Deep, Emotional..."
+                required></textarea>
+            </div>
+            <button type="submit" class="btn-primary" id="setupBtn">
+              <span class="btn-text">Save & Continue</span>
+              <span class="btn-loading"><span class="spinner"></span> Saving...</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PAGE 3: DASHBOARD ════════ -->
+    <div class="page" id="page-dashboard">
+      <div class="dashboard-container">
+        <div class="dash-welcome" id="dashWelcome">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="content-card">
+          <div class="card-row">
+            <div class="card-col">
+              <h3>Research Guest</h3>
+              <p class="text-muted">Enter a name to analyze past interviews.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group span-2">
+              <label for="guestName">Guest Name</label>
+              <div class="input-icon-wrap">
+                <i data-lucide="search" class="input-icon"></i>
+                <input type="text" id="guestName" placeholder="Elon Musk" autocomplete="off">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Count</label>
+              <div class="pill-group" id="countSelector">
+                <button type="button" class="pill-btn selected" data-value="10">10</button>
+                <button type="button" class="pill-btn" data-value="15">15</button>
+                <button type="button" class="pill-btn" data-value="20">20</button>
+                <input type="hidden" id="questionCount" value="10">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="guestContext">Additional Context <span class="badge-optional">Optional</span></label>
+            <textarea id="guestContext" rows="2" placeholder="Specific topic or angle..."></textarea>
+          </div>
+
+          <div class="actions-right">
+            <button class="btn-primary" id="researchBtn" onclick="researchGuest()">
+              <i data-lucide="scan-search" class="icon-btn"></i>
+              <span class="btn-text">Research Guest</span>
+              <span class="btn-loading"><span class="spinner"></span> Researching...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Research Progress -->
+        <div id="researchProgress" class="research-progress" style="display:none;">
+          <div class="progress-header">
+            <div class="progress-pulse"></div>
+            <span id="progressTitle">Researching...</span>
+          </div>
+          <div class="progress-steps" id="progressSteps">
+            <!-- Steps injected by JS -->
+          </div>
+        </div>
+
+        <!-- Research Results -->
+        <div id="researchResults" style="display:none;" class="fade-in">
+          <div class="divider">
+            <span class="divider-text" id="interviewCount">Research Complete</span>
+          </div>
+
+          <div class="interviews-scroll" id="interviewsList"></div>
+
+          <!-- Deep Video Analysis -->
+          <div id="videoAnalysis" style="display:none;" class="web-profile-card"></div>
+
+          <!-- Web Intelligence Profile -->
+          <div id="webProfile" style="display:none;" class="web-profile-card"></div>
+
+          <div class="actions-center">
+            <button class="btn-primary btn-lg" id="generateBtn" onclick="generateQuestions()">
+              <i data-lucide="sparkles" class="icon-btn"></i>
+              <span class="btn-text">Generate Questions</span>
+              <span class="btn-loading"><span class="spinner"></span> Generating...</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════════ PAGE 4: RESULTS ════════ -->
+    <div class="page" id="page-results">
+      <div class="dashboard-container">
+        <div class="nav-back">
+          <button class="btn-ghost btn-sm" onclick="navigateTo('dashboard')">
+            <i data-lucide="arrow-left" class="icon-sm"></i> Back
+          </button>
+        </div>
+
+        <div class="results-header">
+          <h1>Generated Questions</h1>
+          <p class="text-muted" id="questionsSubtitle">For your interview</p>
+        </div>
+
+        <div class="analysis-box" id="guestAnalysis"></div>
+
+        <div id="questionsContainer" class="questions-grid"></div>
+
+        <div class="actions-center" style="margin-top: 40px;">
+          <button class="btn-secondary" onclick="navigateTo('dashboard')">
+            Research Another Guest
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PAGE 5: SETTINGS ════════ -->
+    <div class="page" id="page-settings">
+      <div class="dashboard-container">
+        <div class="nav-back">
+          <button class="btn-ghost btn-sm" onclick="navigateTo('dashboard')">
+            <i data-lucide="arrow-left" class="icon-sm"></i> Back to Dashboard
+          </button>
+        </div>
+
+        <div class="settings-header">
+          <h1><i data-lucide="settings" class="icon-btn"></i> Settings</h1>
+          <p class="text-muted">Configure your API keys and preferences.</p>
+        </div>
+
+        <!-- API Keys -->
+        <div class="content-card settings-card">
+          <div class="settings-section-title">
+            <i data-lucide="key" class="icon-sm"></i>
+            <h3>API Keys</h3>
+          </div>
+          <p class="settings-desc">Use your own API keys for unlimited usage. Keys are stored securely per account.</p>
+
+          <div class="form-group">
+            <label for="settingYoutubeKey">
+              <i data-lucide="youtube" class="icon-xs"></i> YouTube Data API v3 Key
+            </label>
+            <div class="key-input-wrap">
+              <input type="password" id="settingYoutubeKey" placeholder="Paste your YouTube API key..."
+                autocomplete="off">
+              <button type="button" class="btn-reveal" onclick="toggleKeyVisibility('settingYoutubeKey', this)"
+                title="Show/Hide">
+                <i data-lucide="eye" class="icon-sm"></i>
+              </button>
+            </div>
+            <div class="key-status" id="ytKeyStatus"></div>
+            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener"
+              class="key-help-link">
+              <i data-lucide="external-link" class="icon-xs"></i> Get a YouTube API Key from Google Cloud Console
+            </a>
+          </div>
+
+          <div class="form-group">
+            <label for="settingGeminiKey">
+              <i data-lucide="sparkles" class="icon-xs"></i> Google Gemini API Key
+            </label>
+            <div class="key-input-wrap">
+              <input type="password" id="settingGeminiKey" placeholder="Paste your Gemini API key..."
+                autocomplete="off">
+              <button type="button" class="btn-reveal" onclick="toggleKeyVisibility('settingGeminiKey', this)"
+                title="Show/Hide">
+                <i data-lucide="eye" class="icon-sm"></i>
+              </button>
+            </div>
+            <div class="key-status" id="geminiKeyStatus"></div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="key-help-link">
+              <i data-lucide="external-link" class="icon-xs"></i> Get a Gemini API Key from Google AI Studio
+            </a>
+          </div>
+
+          <div class="settings-actions">
+            <button class="btn-primary" id="saveKeysBtn" onclick="saveApiKeys()">
+              <i data-lucide="save" class="icon-btn"></i>
+              <span class="btn-text">Save API Keys</span>
+              <span class="btn-loading"><span class="spinner"></span> Saving...</span>
+            </button>
+            <button class="btn-ghost btn-danger" onclick="clearApiKeys()">
+              <i data-lucide="trash-2" class="icon-sm"></i> Clear Keys
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile Settings -->
+        <div class="content-card settings-card">
+          <div class="settings-section-title">
+            <i data-lucide="user" class="icon-sm"></i>
+            <h3>Profile</h3>
+          </div>
+          <form onsubmit="handleProfileUpdate(event)">
+            <div class="form-group">
+              <label for="settingsName">Name / Channel</label>
+              <input type="text" id="settingsName" placeholder="e.g. Raj Shamani">
+            </div>
+            <div class="form-group">
+              <label for="settingsChannel">About the Show</label>
+              <textarea id="settingsChannel" rows="3" placeholder="Context about your channel..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="settingsStyle">Interview Style</label>
+              <textarea id="settingsStyle" rows="3" placeholder="e.g. Confrontational, Deep, Emotional..."></textarea>
+            </div>
+            <button type="submit" class="btn-primary" id="updateProfileBtn">
+              <span class="btn-text">Update Profile</span>
+              <span class="btn-loading"><span class="spinner"></span> Updating...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Quota Info -->
+        <div class="content-card settings-card quota-info-card">
+          <div class="settings-section-title">
+            <i data-lucide="info" class="icon-sm"></i>
+            <h3>API Quota Information</h3>
+          </div>
+          <div class="quota-grid">
+            <div class="quota-item">
+              <div class="quota-label">YouTube Data API v3</div>
+              <div class="quota-detail">10,000 units/day • Resets at <strong>midnight Pacific Time</strong> (12:30 PM
+                IST)</div>
+              <div class="quota-note">Each search uses ~100 units. ~100 searches per day.</div>
+            </div>
+            <div class="quota-item">
+              <div class="quota-label">Gemini API (Free Tier)</div>
+              <div class="quota-detail">15 RPM / 1,500 RPD • Resets per-minute and <strong>midnight PT</strong></div>
+              <div class="quota-note">Paid tier has much higher limits.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="errorToast">
+    <i data-lucide="alert-circle"></i>
+    <span id="toastMessage">Error message</span>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast toast-success" id="successToast">
+    <i data-lucide="check-circle"></i>
+    <span id="successToastMessage">Success</span>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Initialize icons on load
+    window.addEventListener('load', () => {
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+
+</html>
