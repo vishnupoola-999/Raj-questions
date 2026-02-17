@@ -120,6 +120,12 @@ p {
     letter-spacing: -0.02em;
 }
 
+.brand-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
 .nav-actions {
     display: flex;
     align-items: center;

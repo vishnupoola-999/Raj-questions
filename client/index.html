@@ -11,6 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -20,7 +22,7 @@
   <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-brand" onclick="if(currentUser) navigateTo('dashboard')" style="cursor:pointer;">
-      <i data-lucide="mic" class="brand-icon"></i>
+      <img src="assets/logo.svg" alt="InterviewIQ Logo" class="brand-logo">
       <span class="brand-text">InterviewIQ</span>
     </div>
     <div class="nav-actions" id="navActions" style="display:none;">
