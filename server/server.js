@@ -82,31 +82,38 @@ app.put('/api/profile', auth.authMiddleware, async (req, res) => {
 // ── API Keys Settings (protected) ───────────────────────
 
 app.get('/api/settings/keys', auth.authMiddleware, async (req, res) => {
-    const keys = await auth.getApiKeys(req.userId); // Await
+    const keys = await auth.getApiKeys(req.userId);
     if (!keys) return res.status(404).json({ error: 'User not found' });
-    // Mask keys for display (show only last 4 chars if long enough, else hide all)
+    // Use youtubeApiKey as the single key (both are stored identically)
+    const apiKey = keys.youtubeApiKey || keys.geminiApiKey || '';
     res.json({
         success: true,
         keys: {
-            youtubeApiKey: keys.youtubeApiKey ? (keys.youtubeApiKey.length <= 4 ? '•'.repeat(keys.youtubeApiKey.length) : '•'.repeat(keys.youtubeApiKey.length - 4) + keys.youtubeApiKey.slice(-4)) : '',
-            geminiApiKey: keys.geminiApiKey ? (keys.geminiApiKey.length <= 4 ? '•'.repeat(keys.geminiApiKey.length) : '•'.repeat(keys.geminiApiKey.length - 4) + keys.geminiApiKey.slice(-4)) : '',
-            hasYoutubeKey: !!keys.youtubeApiKey,
-            hasGeminiKey: !!keys.geminiApiKey,
+            apiKey: apiKey ? ('•'.repeat(Math.max(0, apiKey.length - 4)) + apiKey.slice(-4)) : '',
+            hasApiKey: !!apiKey,
         },
     });
 });
 
 app.put('/api/settings/keys', auth.authMiddleware, async (req, res) => {
-    const { youtubeApiKey, geminiApiKey } = req.body;
-    const result = await auth.updateApiKeys(req.userId, { youtubeApiKey, geminiApiKey }); // Await
+    const { apiKey, youtubeApiKey, geminiApiKey } = req.body;
+    // Support both single key and legacy two-key format
+    const key = apiKey !== undefined ? apiKey : undefined;
+    const ytKey = key !== undefined ? key : youtubeApiKey;
+    const gemKey = key !== undefined ? key : geminiApiKey;
+    const result = await auth.updateApiKeys(req.userId, { youtubeApiKey: ytKey, geminiApiKey: gemKey });
     if (!result) return res.status(404).json({ error: 'User not found' });
-    console.log(`🔑 API keys updated for user ${req.userId}`);
-    res.json({ success: true, message: 'API keys saved' });
+    console.log(`🔑 API key updated for user ${req.userId}${key ? ' [Pro mode]' : ' [cleared]'}`);
+    res.json({ success: true, message: 'API key saved' });
 });
 
 // Helper: get user's API keys (full, unmasked) for server-side use
 async function getUserKeys(userId) {
-    return (await auth.getApiKeys(userId)) || {}; // Await
+    const keys = (await auth.getApiKeys(userId)) || {};
+    return {
+        ...keys,
+        hasCustomKey: !!(keys.youtubeApiKey || keys.geminiApiKey),
+    };
 }
 
 // ── Research (protected) ────────────────────────────────
@@ -129,7 +136,7 @@ app.post('/api/research-guest', auth.authMiddleware, async (req, res) => {
     };
 
     try {
-        console.log(`🔎 Streaming research: ${guestName}${context ? ` (context: ${context})` : ''}${userKeys.youtubeApiKey ? ' [custom YT key]' : ''}${userKeys.geminiApiKey ? ' [custom Gemini key]' : ''}`);
+        console.log(`🔎 Streaming research: ${guestName}${context ? ` (context: ${context})` : ''} [${userKeys.hasCustomKey ? 'PRO' : 'FREE'}]`);
         const research = await deepResearch(guestName, onProgress, context || '', userKeys);
         res.write(`data: ${JSON.stringify({ type: 'result', data: research })}\n\n`);
     } catch (err) {

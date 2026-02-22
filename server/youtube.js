@@ -28,37 +28,55 @@ function createGeminiClient(customKey) {
  * Uses MANY search strategies including Hindi and regional variants.
  * Loosened relevance filter to catch more results.
  */
-async function researchGuest(guestName, youtubeApiKey) {
+async function researchGuest(guestName, youtubeApiKey, isPro = false) {
   const yt = createYoutubeClient(youtubeApiKey);
 
-  // ── Build diverse search queries ──────────────────────
-  const queries = [
+  // ── Build search queries (Pro gets more) ──────────────────────
+  const baseQueries = [
     `"${guestName}" interview`,
     `"${guestName}" podcast`,
     `"${guestName}" conversation`,
     `"${guestName}" talk show`,
+    `${guestName} interview full video`,
+    `${guestName} podcast episode`,
+    `"${guestName}" इंटरव्यू`,
+    `"${guestName}" पॉडकास्ट`,
+  ];
+  const proExtraQueries = [
     `"${guestName}" full episode`,
     `"${guestName}" keynote speech`,
     `"${guestName}" panel discussion`,
     `"${guestName}" QnA`,
-    `${guestName} interview full video`,
-    `${guestName} podcast episode`,
-    `"${guestName}" इंटरव्यू`,
     `"${guestName}" बातचीत`,
-    `"${guestName}" पॉडकास्ट`,
   ];
+  const queries = isPro ? [...baseQueries, ...proExtraQueries] : baseQueries;
+  const maxResults = isPro ? 50 : 20;
+  const maxVideoCap = isPro ? Infinity : 100;
+  const maxQuotaErrors = isPro ? queries.length : 3;
+
+  console.log(`  YouTube: ${isPro ? 'PRO' : 'FREE'} mode — ${queries.length} queries, maxResults=${maxResults}`);
 
   const allVideos = [];
   const seenIds = new Set();
   let quotaErrors = 0;
 
   for (const query of queries) {
+    // Stop early if we already have plenty of videos (Free mode only)
+    if (allVideos.length >= maxVideoCap) {
+      console.log(`  YouTube: already have ${allVideos.length} videos, skipping remaining queries`);
+      break;
+    }
+    // Stop early if quota is getting exhausted
+    if (quotaErrors >= maxQuotaErrors) {
+      console.log(`  YouTube: ${quotaErrors} quota errors, stopping${isPro ? '' : ' early to conserve quota'}`);
+      break;
+    }
     try {
       const response = await yt.search.list({
         part: 'snippet',
         q: query,
         type: 'video',
-        maxResults: 50,
+        maxResults: maxResults,
         order: 'relevance',
         videoDuration: 'long',
       });
@@ -90,8 +108,8 @@ async function researchGuest(guestName, youtubeApiKey) {
   }
 
   // If ALL queries failed due to quota, throw a clear error
-  if (quotaErrors === queries.length && allVideos.length === 0) {
-    throw new Error('QUOTA_EXHAUSTED: YouTube API daily quota exhausted. Resets at midnight Pacific Time (12:30 PM IST). Add your own API key in Settings to continue.');
+  if (quotaErrors > 0 && allVideos.length === 0) {
+    throw new Error('QUOTA_EXHAUSTED: YouTube API daily quota exhausted. Resets at midnight Pacific Time (12:30 PM IST). Try again later or add a different API key in Settings.');
   }
 
   // Decode HTML entities from YouTube API responses
@@ -212,8 +230,8 @@ async function fetchTranscripts(videos, onProgress = null) {
 async function analyzeVideoWithGemini(video, geminiApiKey) {
   const genAI = createGeminiClient(geminiApiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { temperature: 0.3, maxOutputTokens: 4000 },
+    model: 'gemini-2.0-flash',
+    generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
   });
 
   const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
@@ -233,7 +251,14 @@ Please provide:
 Be specific and detailed — reference actual content from the video.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // Add 30-second timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Gemini API call timed out after 30s')), 30000)
+    );
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      timeoutPromise,
+    ]);
     const analysis = result.response.text();
 
     if (analysis && analysis.length > 100) {
@@ -252,7 +277,7 @@ Be specific and detailed — reference actual content from the video.`;
     if (msg.includes('429') || msg.includes('quota')) {
       console.log(`    ⚠️ Gemini quota hit for video analysis`);
     } else {
-      console.log(`    ❌ Gemini video analysis failed: ${msg.substring(0, 60)}`);
+      console.log(`    ❌ Gemini video analysis failed: ${msg.substring(0, 80)}`);
     }
     return null;
   }
@@ -261,37 +286,100 @@ Be specific and detailed — reference actual content from the video.`;
 /**
  * Analyze multiple videos with Gemini (for those without transcripts).
  */
-async function analyzeVideosWithGemini(videos, onProgress = null, geminiApiKey = '') {
+async function analyzeVideosWithGemini(videos, onProgress = null, geminiApiKey = '', isPro = false) {
+  // Free: cap at 15 videos. Pro: analyze all.
+  const MAX_GEMINI_VIDEOS = isPro ? videos.length : 15;
+  const videosToAnalyze = videos.slice(0, MAX_GEMINI_VIDEOS);
+  const skipped = videos.length - videosToAnalyze.length;
+  const maxConsecutiveFailures = isPro ? 5 : 3;
+
+  if (skipped > 0) {
+    console.log(`  Gemini video analysis: capped at ${MAX_GEMINI_VIDEOS} (skipping ${skipped})`);
+  }
+  console.log(`  Gemini: ${isPro ? 'PRO' : 'FREE'} mode — analyzing ${videosToAnalyze.length} videos`);
+
   const results = [];
-  const batchSize = 3;
+  let consecutiveFailures = 0;
 
-  for (let i = 0; i < videos.length; i += batchSize) {
-    const batch = videos.slice(i, i + batchSize);
+  if (isPro) {
+    // Pro mode: batch of 3 concurrent, more aggressive
+    const batchSize = 3;
+    for (let i = 0; i < videosToAnalyze.length; i += batchSize) {
+      if (consecutiveFailures >= maxConsecutiveFailures) {
+        console.log(`  Gemini: ${consecutiveFailures} consecutive failures, stopping. Gemini API quota may be exhausted.`);
+        if (onProgress) {
+          onProgress({
+            step: 'gemini_video', status: 'error',
+            message: `⚠️ Gemini API quota exhausted after ${i} videos. ${results.length} analyzed. Enable billing for unlimited usage.`,
+          });
+        }
+        break;
+      }
 
-    if (onProgress) {
-      onProgress({
-        step: 'gemini_video',
-        status: 'active',
-        message: `AI watching video ${i + 1}–${Math.min(i + batchSize, videos.length)} of ${videos.length} (no transcript available)...`,
-      });
-    }
+      const batch = videosToAnalyze.slice(i, i + batchSize);
+      if (onProgress) {
+        onProgress({
+          step: 'gemini_video', status: 'active',
+          message: `AI watching videos ${i + 1}–${Math.min(i + batchSize, videosToAnalyze.length)} of ${videosToAnalyze.length} (Pro mode)...`,
+        });
+      }
 
-    const batchResults = await Promise.all(
-      batch.map(video => analyzeVideoWithGemini(video, geminiApiKey))
-    );
+      const batchResults = await Promise.all(
+        batch.map(video => analyzeVideoWithGemini(video, geminiApiKey))
+      );
 
-    for (const r of batchResults) {
-      if (r) {
-        results.push(r);
+      let batchFailed = 0;
+      for (const r of batchResults) {
+        if (r) {
+          results.push(r);
+          consecutiveFailures = 0;
+        } else {
+          batchFailed++;
+        }
+      }
+      if (batchFailed === batch.length) consecutiveFailures += batchFailed;
+      else consecutiveFailures = 0;
+
+      if (i + batchSize < videosToAnalyze.length) {
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
+  } else {
+    // Free mode: sequential, conservative
+    for (let i = 0; i < videosToAnalyze.length; i++) {
+      if (consecutiveFailures >= maxConsecutiveFailures) {
+        console.log(`  Gemini: ${consecutiveFailures} consecutive failures, stopping.`);
+        if (onProgress) {
+          onProgress({
+            step: 'gemini_video', status: 'error',
+            message: `⚠️ Gemini API quota exhausted. ${results.length} of ${videosToAnalyze.length} videos analyzed. Add your own API key for unlimited usage.`,
+          });
+        }
+        break;
+      }
 
-    if (i + batchSize < videos.length) {
-      await new Promise(r => setTimeout(r, 2000));
+      if (onProgress) {
+        onProgress({
+          step: 'gemini_video', status: 'active',
+          message: `AI watching video ${i + 1} of ${videosToAnalyze.length}${skipped > 0 ? ` (${skipped} skipped)` : ''}...`,
+        });
+      }
+
+      const result = await analyzeVideoWithGemini(videosToAnalyze[i], geminiApiKey);
+      if (result) {
+        results.push(result);
+        consecutiveFailures = 0;
+      } else {
+        consecutiveFailures++;
+      }
+
+      if (i < videosToAnalyze.length - 1) {
+        await new Promise(r => setTimeout(r, 1500));
+      }
     }
   }
 
-  console.log(`  Gemini video analysis: ${results.length}/${videos.length} videos analyzed`);
+  console.log(`  Gemini video analysis: ${results.length}/${videosToAnalyze.length} videos analyzed`);
   return results;
 }
 

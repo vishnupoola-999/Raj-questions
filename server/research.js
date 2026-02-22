@@ -17,7 +17,8 @@ function getGenAI(customKey) {
 async function deepResearch(guestName, onProgress = () => { }, context = '', userKeys = {}) {
     const geminiKey = userKeys.geminiApiKey || '';
     const youtubeKey = userKeys.youtubeApiKey || '';
-    console.log(`\n🔎 Deep Research: "${guestName}"${context ? ` (context: ${context})` : ''}${youtubeKey ? ' [custom YT]' : ''}${geminiKey ? ' [custom Gemini]' : ''}`);
+    const isPro = !!userKeys.hasCustomKey;
+    console.log(`\n🔎 Deep Research: "${guestName}"${context ? ` (context: ${context})` : ''} [${isPro ? 'PRO' : 'FREE'}]`);
 
     onProgress({ step: 'start', status: 'active', message: `Starting deep research on ${guestName}...` });
 
@@ -41,12 +42,12 @@ async function deepResearch(guestName, onProgress = () => { }, context = '', use
 
     const searchName = correctedName;
 
-    // ─── Step 1: YouTube Search (13 queries) ──────────
+    // ─── Step 1: YouTube Search ──────────
     onProgress({ step: 'youtube', status: 'active', message: `Searching YouTube for ${searchName} interviews, podcasts, talks...` });
 
     let ytResult = { interviews: [], totalInterviewsFound: 0 };
     try {
-        ytResult = await youtubeSearch(searchName, youtubeKey);
+        ytResult = await youtubeSearch(searchName, youtubeKey, isPro);
         onProgress({ step: 'youtube', status: 'done', message: `Found ${ytResult.totalInterviewsFound} relevant YouTube videos` });
     } catch (err) {
         console.error('YouTube search failed:', err.message);
@@ -86,11 +87,11 @@ async function deepResearch(guestName, onProgress = () => { }, context = '', use
     if (failedVideos.length > 0) {
         onProgress({
             step: 'gemini_video', status: 'active',
-            message: `AI watching ${failedVideos.length} videos without transcripts...`
+            message: `AI watching ${failedVideos.length} videos without transcripts${isPro ? '' : ` (max 15 in Free mode)`}...`
         });
 
         try {
-            geminiAnalyzed = await analyzeVideosWithGemini(failedVideos, onProgress, geminiKey);
+            geminiAnalyzed = await analyzeVideosWithGemini(failedVideos, onProgress, geminiKey, isPro);
             onProgress({
                 step: 'gemini_video', status: 'done',
                 message: `AI analyzed ${geminiAnalyzed.length} videos directly (no transcripts needed)`

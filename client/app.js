@@ -11,6 +11,15 @@ let isResearching = false; // Lock to prevent double-triggering
 // ── Initialization ─────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Restore saved email ("Remember me")
+    const savedEmail = localStorage.getItem('iq_remembered_email');
+    if (savedEmail) {
+        const loginEmailEl = document.getElementById('loginEmail');
+        const rememberCheckbox = document.getElementById('rememberMe');
+        if (loginEmailEl) loginEmailEl.value = savedEmail;
+        if (rememberCheckbox) rememberCheckbox.checked = true;
+    }
+
     if (token) {
         const ok = await loadProfile();
         if (ok) {
@@ -25,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } else {
         navigateTo('auth');
+        // If we have a saved email, show login view instead of register
+        if (savedEmail) showAuthView('login');
     }
 });
 
@@ -86,6 +97,14 @@ async function handleLogin(e) {
         token = res.token;
         localStorage.setItem('iq_token', token);
         currentUser = res.user;
+
+        // Remember me
+        const rememberCheckbox = document.getElementById('rememberMe');
+        if (rememberCheckbox && rememberCheckbox.checked) {
+            localStorage.setItem('iq_remembered_email', email);
+        } else {
+            localStorage.removeItem('iq_remembered_email');
+        }
 
         if (!currentUser.profileComplete) {
             navigateTo('setup');
@@ -537,32 +556,31 @@ async function loadSettingsPage() {
         document.getElementById('settingsStyle').value = currentUser.interviewerStyle || '';
     }
 
-    // Load API keys (masked from server)
+    // Load API key
     try {
         const res = await apiFetch('/api/settings/keys', 'GET');
         const keys = res.keys;
 
-        const ytInput = document.getElementById('settingYoutubeKey');
-        const geminiInput = document.getElementById('settingGeminiKey');
+        const apiInput = document.getElementById('settingApiKey');
+        apiInput.value = keys.hasApiKey ? keys.apiKey : '';
 
-        // Show masked keys or empty
-        ytInput.value = keys.hasYoutubeKey ? keys.youtubeApiKey : '';
-        geminiInput.value = keys.hasGeminiKey ? keys.geminiApiKey : '';
+        // Update status indicator
+        updateKeyStatus('apiKeyStatus', keys.hasApiKey);
 
-        // Update status indicators
-        updateKeyStatus('ytKeyStatus', keys.hasYoutubeKey);
-        updateKeyStatus('geminiKeyStatus', keys.hasGeminiKey);
+        // Show/hide Pro mode banner
+        const banner = document.getElementById('proModeBanner');
+        if (banner) banner.style.display = keys.hasApiKey ? 'flex' : 'none';
     } catch (err) {
-        console.error('Failed to load API keys:', err);
+        console.error('Failed to load API key:', err);
     }
 }
 
 function updateKeyStatus(elementId, hasKey) {
     const el = document.getElementById(elementId);
     if (hasKey) {
-        el.innerHTML = '<span class="key-active"><i data-lucide="check-circle" class="icon-xs"></i> Key saved</span>';
+        el.innerHTML = '<span class="key-active"><i data-lucide="check-circle" class="icon-xs"></i> Key saved — Pro mode active</span>';
     } else {
-        el.innerHTML = '<span class="key-inactive"><i data-lucide="alert-circle" class="icon-xs"></i> Using server default</span>';
+        el.innerHTML = '<span class="key-inactive"><i data-lucide="alert-circle" class="icon-xs"></i> No key — using Free mode</span>';
     }
     if (window.lucide) lucide.createIcons();
 }
@@ -572,21 +590,16 @@ async function saveApiKeys() {
     setLoading(btn, true);
 
     try {
-        const ytKey = document.getElementById('settingYoutubeKey').value.trim();
-        const geminiKey = document.getElementById('settingGeminiKey').value.trim();
+        const apiKey = document.getElementById('settingApiKey').value.trim();
 
         // Don't send masked values back (they contain • characters)
-        const payload = {};
-        if (!ytKey.includes('•')) payload.youtubeApiKey = ytKey;
-        if (!geminiKey.includes('•')) payload.geminiApiKey = geminiKey;
-
-        if (Object.keys(payload).length === 0) {
+        if (apiKey.includes('•')) {
             showSuccess('No changes to save');
             return;
         }
 
-        await apiFetch('/api/settings/keys', 'PUT', payload);
-        showSuccess('API keys saved successfully!');
+        await apiFetch('/api/settings/keys', 'PUT', { apiKey });
+        showSuccess(apiKey ? 'API key saved — Pro mode activated!' : 'API key cleared');
 
         // Reload to update statuses
         await loadSettingsPage();
@@ -598,18 +611,14 @@ async function saveApiKeys() {
 }
 
 async function clearApiKeys() {
-    if (!confirm('Remove all custom API keys? The server defaults will be used instead.')) return;
+    if (!confirm('Remove your API key? You will switch back to Free mode with limited usage.')) return;
 
     try {
-        await apiFetch('/api/settings/keys', 'PUT', {
-            youtubeApiKey: '',
-            geminiApiKey: '',
-        });
+        await apiFetch('/api/settings/keys', 'PUT', { apiKey: '' });
 
-        document.getElementById('settingYoutubeKey').value = '';
-        document.getElementById('settingGeminiKey').value = '';
+        document.getElementById('settingApiKey').value = '';
 
-        showSuccess('API keys cleared');
+        showSuccess('API key cleared — switched to Free mode');
         await loadSettingsPage();
     } catch (err) {
         showError(err.message);
