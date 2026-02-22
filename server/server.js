@@ -143,14 +143,23 @@ app.post('/api/research-guest', auth.authMiddleware, async (req, res) => {
 // ── Question Generation (protected) ─────────────────────
 
 app.post('/api/generate-questions', auth.authMiddleware, async (req, res) => {
-    const { guestName, researchContext } = req.body;
+    const { interviewerName, interviewerStyle, channelDescription, guestName, guestContext, pastInterviewsSummary, questionCount } = req.body;
 
     // Get user's custom API keys
-    const userKeys = await getUserKeys(req.userId); // Await
+    const userKeys = await getUserKeys(req.userId);
 
     try {
-        const questions = await generateQuestions(guestName, researchContext, userKeys.geminiApiKey);
-        res.json({ questions });
+        const result = await generateQuestions({
+            interviewerName,
+            interviewerStyle,
+            channelDescription,
+            guestName,
+            guestContext,
+            pastInterviewsSummary,
+            questionCount,
+            geminiApiKey: userKeys.geminiApiKey,
+        });
+        res.json(result);
     } catch (err) {
         console.error('Question generation error:', err);
         res.status(500).json({ error: err.message });

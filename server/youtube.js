@@ -94,6 +94,12 @@ async function researchGuest(guestName, youtubeApiKey) {
     throw new Error('QUOTA_EXHAUSTED: YouTube API daily quota exhausted. Resets at midnight Pacific Time (12:30 PM IST). Add your own API key in Settings to continue.');
   }
 
+  // Decode HTML entities from YouTube API responses
+  function decodeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  }
+
   // ── Loosened Relevance Filter ──────────────────────────
   const nameParts = guestName.toLowerCase().split(/\s+/).filter(p => p.length > 2);
   const fullName = guestName.toLowerCase();
@@ -101,9 +107,9 @@ async function researchGuest(guestName, youtubeApiKey) {
   const lastName = nameParts[nameParts.length - 1] || '';
 
   const relevant = allVideos.filter(v => {
-    const title = v.title.toLowerCase();
-    const desc = v.description.toLowerCase();
-    const channel = v.channelTitle.toLowerCase();
+    const title = decodeHtml(v.title).toLowerCase();
+    const desc = decodeHtml(v.description).toLowerCase();
+    const channel = decodeHtml(v.channelTitle).toLowerCase();
     const all = title + ' ' + desc + ' ' + channel;
 
     if (all.includes(fullName)) return true;

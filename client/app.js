@@ -428,6 +428,10 @@ async function generateQuestions() {
             questionCount,
         });
 
+        if (res.success === false) {
+            showError(res.error || 'Question generation failed. Please try again.');
+            return;
+        }
         displayQuestions(res.data, currentUser.name, guestName);
         navigateTo('results');
     } catch (err) {
