@@ -556,31 +556,34 @@ async function loadSettingsPage() {
         document.getElementById('settingsStyle').value = currentUser.interviewerStyle || '';
     }
 
-    // Load API key
+    // Load API keys (masked from server)
     try {
         const res = await apiFetch('/api/settings/keys', 'GET');
         const keys = res.keys;
 
-        const apiInput = document.getElementById('settingApiKey');
-        apiInput.value = keys.hasApiKey ? keys.apiKey : '';
+        const ytInput = document.getElementById('settingYoutubeKey');
+        const geminiInput = document.getElementById('settingGeminiKey');
 
-        // Update status indicator
-        updateKeyStatus('apiKeyStatus', keys.hasApiKey);
+        ytInput.value = keys.hasYoutubeKey ? keys.youtubeApiKey : '';
+        geminiInput.value = keys.hasGeminiKey ? keys.geminiApiKey : '';
 
-        // Show/hide Pro mode banner
+        updateKeyStatus('ytKeyStatus', keys.hasYoutubeKey);
+        updateKeyStatus('geminiKeyStatus', keys.hasGeminiKey);
+
+        // Show Pro mode banner when both keys are saved
         const banner = document.getElementById('proModeBanner');
-        if (banner) banner.style.display = keys.hasApiKey ? 'flex' : 'none';
+        if (banner) banner.style.display = (keys.hasYoutubeKey && keys.hasGeminiKey) ? 'flex' : 'none';
     } catch (err) {
-        console.error('Failed to load API key:', err);
+        console.error('Failed to load API keys:', err);
     }
 }
 
 function updateKeyStatus(elementId, hasKey) {
     const el = document.getElementById(elementId);
     if (hasKey) {
-        el.innerHTML = '<span class="key-active"><i data-lucide="check-circle" class="icon-xs"></i> Key saved — Pro mode active</span>';
+        el.innerHTML = '<span class="key-active"><i data-lucide="check-circle" class="icon-xs"></i> Key saved</span>';
     } else {
-        el.innerHTML = '<span class="key-inactive"><i data-lucide="alert-circle" class="icon-xs"></i> No key — using Free mode</span>';
+        el.innerHTML = '<span class="key-inactive"><i data-lucide="alert-circle" class="icon-xs"></i> No key set</span>';
     }
     if (window.lucide) lucide.createIcons();
 }
@@ -590,16 +593,21 @@ async function saveApiKeys() {
     setLoading(btn, true);
 
     try {
-        const apiKey = document.getElementById('settingApiKey').value.trim();
+        const ytKey = document.getElementById('settingYoutubeKey').value.trim();
+        const geminiKey = document.getElementById('settingGeminiKey').value.trim();
 
         // Don't send masked values back (they contain • characters)
-        if (apiKey.includes('•')) {
+        const payload = {};
+        if (!ytKey.includes('•')) payload.youtubeApiKey = ytKey;
+        if (!geminiKey.includes('•')) payload.geminiApiKey = geminiKey;
+
+        if (Object.keys(payload).length === 0) {
             showSuccess('No changes to save');
             return;
         }
 
-        await apiFetch('/api/settings/keys', 'PUT', { apiKey });
-        showSuccess(apiKey ? 'API key saved — Pro mode activated!' : 'API key cleared');
+        await apiFetch('/api/settings/keys', 'PUT', payload);
+        showSuccess('API keys saved!');
 
         // Reload to update statuses
         await loadSettingsPage();
@@ -611,14 +619,18 @@ async function saveApiKeys() {
 }
 
 async function clearApiKeys() {
-    if (!confirm('Remove your API key? You will switch back to Free mode with limited usage.')) return;
+    if (!confirm('Remove all API keys?')) return;
 
     try {
-        await apiFetch('/api/settings/keys', 'PUT', { apiKey: '' });
+        await apiFetch('/api/settings/keys', 'PUT', {
+            youtubeApiKey: '',
+            geminiApiKey: '',
+        });
 
-        document.getElementById('settingApiKey').value = '';
+        document.getElementById('settingYoutubeKey').value = '';
+        document.getElementById('settingGeminiKey').value = '';
 
-        showSuccess('API key cleared — switched to Free mode');
+        showSuccess('API keys cleared');
         await loadSettingsPage();
     } catch (err) {
         showError(err.message);

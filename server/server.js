@@ -84,13 +84,15 @@ app.put('/api/profile', auth.authMiddleware, async (req, res) => {
 app.get('/api/settings/keys', auth.authMiddleware, async (req, res) => {
     const keys = await auth.getApiKeys(req.userId);
     if (!keys) return res.status(404).json({ error: 'User not found' });
-    // Use youtubeApiKey as the single key (both are stored identically)
-    const apiKey = keys.youtubeApiKey || keys.geminiApiKey || '';
+    // Mask keys for display (show only last 4 chars)
+    const mask = (k) => k ? ('•'.repeat(Math.max(0, k.length - 4)) + k.slice(-4)) : '';
     res.json({
         success: true,
         keys: {
-            apiKey: apiKey ? ('•'.repeat(Math.max(0, apiKey.length - 4)) + apiKey.slice(-4)) : '',
-            hasApiKey: !!apiKey,
+            youtubeApiKey: mask(keys.youtubeApiKey),
+            geminiApiKey: mask(keys.geminiApiKey),
+            hasYoutubeKey: !!keys.youtubeApiKey,
+            hasGeminiKey: !!keys.geminiApiKey,
         },
     });
 });

@@ -295,35 +295,49 @@
           <p class="text-muted">Configure your API keys and preferences.</p>
         </div>
 
-        <!-- API Key -->
+        <!-- API Keys -->
         <div class="content-card settings-card">
           <div class="settings-section-title">
             <i data-lucide="key" class="icon-sm"></i>
-            <h3>Google API Key</h3>
+            <h3>API Keys</h3>
           </div>
-          <p class="settings-desc">Add your own Google API key to unlock <strong>Pro mode</strong> — full deep research
-            with no limits. One key works for both YouTube and Gemini.</p>
+          <p class="settings-desc">Add your own API keys for unlimited usage. Keys are stored securely per account.</p>
 
           <div class="form-group">
-            <label for="settingApiKey">
-              <i data-lucide="key" class="icon-xs"></i> API Key
+            <label for="settingYoutubeKey">
+              <i data-lucide="youtube" class="icon-xs"></i> YouTube Data API v3 Key
             </label>
             <div class="key-input-wrap">
-              <input type="password" id="settingApiKey" placeholder="Paste your Google API key..." autocomplete="off">
-              <button type="button" class="btn-reveal" onclick="toggleKeyVisibility('settingApiKey', this)"
+              <input type="password" id="settingYoutubeKey" placeholder="Paste your YouTube API key..."
+                autocomplete="off">
+              <button type="button" class="btn-reveal" onclick="toggleKeyVisibility('settingYoutubeKey', this)"
                 title="Show/Hide">
                 <i data-lucide="eye" class="icon-sm"></i>
               </button>
             </div>
-            <div class="key-status" id="apiKeyStatus"></div>
+            <div class="key-status" id="ytKeyStatus"></div>
             <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener"
               class="key-help-link">
-              <i data-lucide="external-link" class="icon-xs"></i> Get an API Key from Google Cloud Console
+              <i data-lucide="external-link" class="icon-xs"></i> Get a YouTube API Key from Google Cloud Console
             </a>
-            <p class="settings-desc" style="margin-top: 12px; font-size: 0.8rem; color: var(--text-dim);">
-              Enable <strong>YouTube Data API v3</strong> and <strong>Generative Language API</strong> in your Google
-              Cloud project. Enable billing for unlimited usage.
-            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="settingGeminiKey">
+              <i data-lucide="sparkles" class="icon-xs"></i> Google Gemini API Key
+            </label>
+            <div class="key-input-wrap">
+              <input type="password" id="settingGeminiKey" placeholder="Paste your Gemini API key..."
+                autocomplete="off">
+              <button type="button" class="btn-reveal" onclick="toggleKeyVisibility('settingGeminiKey', this)"
+                title="Show/Hide">
+                <i data-lucide="eye" class="icon-sm"></i>
+              </button>
+            </div>
+            <div class="key-status" id="geminiKeyStatus"></div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="key-help-link">
+              <i data-lucide="external-link" class="icon-xs"></i> Get a Gemini API Key from Google AI Studio
+            </a>
           </div>
 
           <div class="pro-mode-banner" id="proModeBanner" style="display:none;">
@@ -334,11 +348,11 @@
           <div class="settings-actions">
             <button class="btn-primary" id="saveKeysBtn" onclick="saveApiKeys()">
               <i data-lucide="save" class="icon-btn"></i>
-              <span class="btn-text">Save API Key</span>
+              <span class="btn-text">Save API Keys</span>
               <span class="btn-loading"><span class="spinner"></span> Saving...</span>
             </button>
             <button class="btn-ghost btn-danger" onclick="clearApiKeys()">
-              <i data-lucide="trash-2" class="icon-sm"></i> Clear Key
+              <i data-lucide="trash-2" class="icon-sm"></i> Clear Keys
             </button>
           </div>
         </div>
@@ -367,29 +381,6 @@
               <span class="btn-loading"><span class="spinner"></span> Updating...</span>
             </button>
           </form>
-        </div>
-
-        <!-- Quota Info -->
-        <div class="content-card settings-card quota-info-card">
-          <div class="settings-section-title">
-            <i data-lucide="info" class="icon-sm"></i>
-            <h3>Free vs Pro Mode</h3>
-          </div>
-          <div class="quota-grid">
-            <div class="quota-item">
-              <div class="quota-label">🆓 Free Mode (no API key)</div>
-              <div class="quota-detail">Limited YouTube searches · Max 15 video analyses · Conservative rate limits
-              </div>
-              <div class="quota-note">Great for trying out the app. Shared quota resets at midnight Pacific Time.</div>
-            </div>
-            <div class="quota-item" style="border-color: var(--accent-blue); background: rgba(59,130,246,0.05);">
-              <div class="quota-label">⚡ Pro Mode (your own API key)</div>
-              <div class="quota-detail">Unlimited YouTube searches · Analyzes <strong>every</strong> video · Full deep
-                research</div>
-              <div class="quota-note">Enable billing on your Google Cloud project for unlimited usage. ~$0.01-0.05 per
-                research.</div>
-            </div>
-          </div>
         </div>
 
       </div>
